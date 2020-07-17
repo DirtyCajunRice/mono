@@ -31,7 +31,7 @@ jobs:
       - name: Build image
         run: docker build . --file Dockerfile --tag ${{ github.repository }}
       - name: Import Secrets
-        uses: RichiCoder1/vault-action
+        uses: RichiCoder1/vault-action@v1.0.1
         with:
           url: ${{ secrets.VaultURL }}
           method: approle
