@@ -38,8 +38,8 @@ jobs:
           roleId: ${{ secrets.appRoleID }}
           secretId: ${{ secrets.appSecretID }}
           secrets: |
-              kv-v2/auth/dockerhubci username | DOCKERHUB_USERNAME ;
-              kv-v2/auth/dockerhubci token | DOCKERHUB_TOKEN
+              kv-v2/data/auth/dockerhubci username | DOCKERHUB_USERNAME ;
+              kv-v2/data/auth/dockerhubci token | DOCKERHUB_TOKEN
       - name: Log into registry
         run: echo "${DOCKERHUB_TOKEN}" | docker login -u $DOCKERHUB_USERNAME} --password-stdin
       - name: Push image
