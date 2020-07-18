@@ -1,4 +1,4 @@
-name: Check for new version and push tag
+name: Version Check
 on:
   schedule:
     - cron: '*/5 * * * *'
@@ -13,7 +13,7 @@ jobs:
         id: mono_version
         run: |
           NEW_VER=$(curl -s http://download.mono-project.com/repo/ubuntu/dists/bionic/main/binary-amd64/Packages | grep 'Package: mono-devel' -A 2 | tail -1 | cut -d' ' -f2 | cut -d- -f1)
-          if [[ -n "$(git tag -l v${NEW_VER}) ]]
+          if [[ -n "$(git tag -l v${NEW_VER})" ]]
           then
             echo ::set-output name=version::$NEW_VER
           else
