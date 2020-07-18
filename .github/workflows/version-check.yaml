@@ -23,6 +23,6 @@ jobs:
         uses: richardsimko/update-tag@v1.0.3
         if: steps.mono_version.outputs.version != ''
         with:
-          tag_name: ${{ steps.mono_version.outputs.version }}
+          tag_name: v${{ steps.mono_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
