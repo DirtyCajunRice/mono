@@ -1,7 +1,7 @@
 name: Check for new version and push tag
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '*/5 * * * *'
 jobs:
   check-and-push:
     runs-on: ubuntu-latest
@@ -21,7 +21,7 @@ jobs:
           fi
       - name: Tag Repo
         uses: richardsimko/update-tag@v1.0.3
-        if: steps.mono_version.outputs.version != ""
+        if: steps.mono_version.outputs.version != ''
         with:
           tag_name: ${{ steps.mono_version.outputs.version }}
         env:
