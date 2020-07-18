@@ -1,6 +1,5 @@
 FROM ubuntu:18.04
-
-LABEL maintainer="dirtycajunrice"
+MAINTAINER dirtycajunrice
 
 RUN \
  echo "**** install prereqs ****" && \

@@ -1,35 +1,38 @@
-name: Docker
-
+name: Check and Push
 on:
-  push:
-    branches:
-      - master
-    tags:
-      - v*
-  # Run tests for any PRs.
-  pull_request:
+  schedule:
+    - cron: '*/30 * * * *'
 jobs:
-  #test:
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v2
-  #    - name: Run tests
-  #      run: |
-  #        if [ -f docker-compose.test.yml ]; then
-  #          docker-compose --file docker-compose.test.yml build
-  #          docker-compose --file docker-compose.test.yml run sut
-  #        else
-  #          docker build . --file Dockerfile
-  #        fi
-  push:
-    # Ensure test job passes before pushing image.
-    #needs: test
+  version-check:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, 'docker skip')
+    outputs: 
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Get Version
+        id: check
+        run: |
+          export CURRENT_VERSION=$(curl -s http://download.mono-project.com/repo/ubuntu/dists/bionic/main/binary-amd64/Packages | grep 'Package: mono-devel' -A 2 | tail -1 | cut -d' ' -f2 | cut -d- -f1)
+          echo CURRENT_VERSION=$CURRENT_VERSION
+          MATCH="$(curl -s https://registry.hub.docker.com/v1/repositories/itscontained/mono/tags | jq -r '.[] | select(.name==env.CURRENT_VERSION) | .name')"
+          if [[ -z "$MATCH" ]]
+          then
+            echo Setting version output for push job
+            echo ::set-output name=version::$CURRENT_VERSION
+          else
+            echo Found existing tag in repo
+            echo ::set-output name=version::""
+          fi
+  push:
+    neeeds: version-check
+    runs-on: ubuntu-latest
+    if: needs.version-check.outputs.version
     steps:
       - uses: actions/checkout@v2
       - name: Build image
-        run: docker build . --file Dockerfile --tag ${{ github.repository }}
+        run: docker build --build-args MONO_VERSION=${{ needs.version-check.outputs.version }} . \
+               --file Dockerfile \
+               --tag ${{ github.repository }}:${{ needs.version-check.outputs.version }} \
+               --tag ${{ github.repository }}:latest
       - name: Import Secrets
         uses: RichiCoder1/vault-action@v1.0.1
         with:
@@ -45,13 +48,4 @@ jobs:
         run: echo ${DOCKERHUB_TOKEN//\"} | docker login -u ${DOCKERHUB_USERNAME//\"} --password-stdin
       - name: Push image
         run: |
-          # Strip git ref prefix from version
-          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-          # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-          # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
-          echo IMAGE_ID=${{ github.repository }}
-          echo VERSION=$VERSION
-          docker tag ${{ github.repository }} ${{ github.repository }}:$VERSION
-          docker push ${{ github.repository }}:$VERSION
+          docker push ${{ github.repository }}
