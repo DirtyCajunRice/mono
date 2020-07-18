@@ -23,7 +23,7 @@ jobs:
             echo ::set-output name=version::""
           fi
   push:
-    neeeds: version-check
+    needs: version-check
     runs-on: ubuntu-latest
     if: needs.version-check.outputs.version
     steps:
