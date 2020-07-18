@@ -1,7 +1,7 @@
-name: Version Check
+name: Upstream Version Check
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/30 * * * *'
 jobs:
   check-and-push:
     runs-on: ubuntu-latest
