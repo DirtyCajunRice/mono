@@ -7,17 +7,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs: 
       version: ${{ steps.check.outputs.version }}
+      fullversion: ${{ steps.check.outputs.fullversion }}
     steps:
       - name: Get Version
         id: check
         run: |
-          export VERSION=$(curl -s http://download.mono-project.com/repo/ubuntu/dists/bionic/main/binary-amd64/Packages | grep 'Package: mono-devel' -A 2 | tail -1 | cut -d' ' -f2 | cut -d- -f1)
-          echo VERSION=%VERSION
+          FULL_VERSION=$(curl -s http://download.mono-project.com/repo/ubuntu/dists/stable-focal/main/binary-amd64/Packages | grep 'Package: mono-devel' -A 2 | tail -1 | cut -d' ' -f2)
+          VERSION=${FULL_VERSION%%-*}
+          echo VERSION=$VERSION
           MATCH="$(curl -s https://registry.hub.docker.com/v1/repositories/itscontained/mono/tags | jq -r '.[] | select(.name==env.VERSION) | .name')"
           if [[ -z "$MATCH" ]]
           then
             echo Setting version output for push job
             echo ::set-output name=version::$VERSION
+            echo ::set-output name=fullversion::$FULL_VERSION
           else
             echo Found existing tag in repo
             echo ::set-output name=version::""
@@ -29,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build image
-        run: docker build --build-arg VERSION=${{ needs.version-check.outputs.version }} --file Dockerfile --tag ${{ github.repository }}:${{ needs.version-check.outputs.version }} --tag ${{ github.repository }}:latest .
+        run: docker build --build-arg VERSION=${{ needs.version-check.outputs.fullversion }} --file Dockerfile --tag ${{ github.repository }}:${{ needs.version-check.outputs.version }} --tag ${{ github.repository }}:latest .
       - name: Import Secrets
         uses: RichiCoder1/vault-action@v1.0.1
         with:
